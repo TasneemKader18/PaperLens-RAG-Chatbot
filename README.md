@@ -14,19 +14,23 @@ PaperLens lets you have a conversation with your research papers. Upload PDFs, a
 
 ## Tech Stack
 
-Backend: Flask (Python) 
-PDF Parsing: PyMuPDF 
-Embeddings: all-MiniLM-L6-v2 (sentence-transformers)
-Vector Search:FAISS (IndexFlatIP)
-LLM:TinyLlama 1.1B via Ollama 
-Frontend:HTML, CSS, JavaScript
-Data Persistence: JSON file storage
+| Component | Technology |
+|---|---|
+| Backend | Flask (Python) |
+| PDF Parsing | PyMuPDF |
+| Embeddings | all-MiniLM-L6-v2 (sentence-transformers) |
+| Vector Search | FAISS (IndexFlatIP) |
+| LLM | TinyLlama 1.1B via Ollama |
+| Frontend | HTML, CSS, JavaScript |
+| Data Persistence | JSON file storage |
 
 ## Project Structure
 
+
+```
 PaperLens/
 ├── app.py                 # Flask server and API routes
-├── rag_engine.py          # RAG pipeline (extract, chunk, embed,retrieve, query)
+├── rag_engine.py          # RAG pipeline (extract, chunk, embed, retrieve, query)
 ├── data_store.py          # JSON-based persistence for logs and history
 ├── requirements.txt       # Python dependencies
 ├── templates/
@@ -37,6 +41,7 @@ PaperLens/
     ├── chat_history.json
     ├── upload_history.json
     └── events.json
+```
 
 ## Prerequisites
 
