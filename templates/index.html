@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaperLens - Research Paper Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo-area">
+      <h2 class="logo">
+        <div class="logo-icon">P</div>
+        Paper<span>Lens</span>
+      </h2>
+      <p class="subtitle">AI Research Paper Assistant</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Papers
+      </div>
+      <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon-wrap">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <p class="upload-text"><strong>Click to browse</strong> or drag & drop</p>
+        <p class="upload-hint">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          PDF files only &middot; up to 4 papers
+        </p>
+      </div>
+      <input type="file" id="fileInput" class="file-input" accept=".pdf" multiple>
+      <div class="selected-files" id="selectedFiles">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span id="selectedFilesText"></span>
+      </div>
+      <button class="btn btn-primary" id="uploadBtn" onclick="uploadPapers()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload 
+      </button>
+      <p class="status" id="uploadStatus"></p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        <span id="kbLabel">Knowledge Base (0 papers)</span>
+      </div>
+      <ul class="paper-list" id="paperList">
+        <li class="empty">No papers loaded yet</li>
+      </ul>
+      <button class="btn btn-danger" id="clearBtn" onclick="clearKB()" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        Clear Knowledge Base
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <span class="footer-dot"></span>
+      Powered by LLaMA 3.1 + FAISS
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat-area">
+    <div class="chat-header">
+      <h3>
+        <span class="online-dot"></span>
+        Chat
+      </h3>
+      <p>Ask anything about your uploaded research papers</p>
+    </div>
+
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon-wrap">&#128218;</div>
+        <h3>Ask your research papers anything</h3>
+        <p>Upload PDFs on the left to build your knowledge base, then start asking questions below.</p>
+        <div class="suggestions">
+          <span class="suggestion" onclick="fillQuestion(this)">Summarize the key findings</span>
+          <span class="suggestion" onclick="fillQuestion(this)">What methodology was used?</span>
+          <span class="suggestion" onclick="fillQuestion(this)">Compare the results across papers</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-wrapper">
+        <textarea id="chatInput" placeholder="Ask about your papers..." rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+      </div>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send message">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let thinking = false;
+
+    // Drag & drop
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      fileInput.files = e.dataTransfer.files;
+      showSelected();
+    });
+    fileInput.addEventListener('change', showSelected);
+
+    function showSelected() {
+      const wrap = document.getElementById('selectedFiles');
+      const el = document.getElementById('selectedFilesText');
+      const count = fileInput.files.length;
+      if (count) {
+        const names = Array.from(fileInput.files).map(f => f.name).join(', ');
+        el.textContent = `${count} file${count > 1 ? 's' : ''} selected: ${names}`;
+        wrap.classList.add('visible');
+      } else {
+        el.textContent = '';
+        wrap.classList.remove('visible');
+      }
+    }
+
+    // Load papers on start
+    fetch('/papers').then(r => r.json()).then(updateKB).catch(() => {});
+
+    function updateKB(data) {
+      const list = document.getElementById('paperList');
+      const label = document.getElementById('kbLabel');
+      const clearBtn = document.getElementById('clearBtn');
+
+      label.textContent = `Knowledge Base (${data.papers.length} paper${data.papers.length !== 1 ? 's' : ''})`;
+      list.innerHTML = data.papers.length
+        ? data.papers.map(p => `<li class="paper-item"><span class="paper-dot"></span>${esc(p)}</li>`).join('')
+        : '<li class="empty">No papers loaded yet</li>';
+      clearBtn.style.display = data.papers.length ? 'block' : 'none';
+    }
+
+    async function uploadPapers() {
+      if (!fileInput.files.length) return;
+
+      const btn = document.getElementById('uploadBtn');
+      const status = document.getElementById('uploadStatus');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="dot-loader"><span>.</span><span>.</span><span>.</span></span> Indexing papers';
+      status.textContent = '';
+      status.className = 'status';
+
+      const form = new FormData();
+      for (const f of fileInput.files) form.append('files', f);
+
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: form });
+        const data = await res.json();
+        updateKB(data);
+        status.textContent = `Added ${data.added.length} paper(s)` +
+          (data.skipped.length ? `, skipped ${data.skipped.length}` : '') +
+          ` \u2014 ${data.total_chunks} chunks indexed`;
+        fileInput.value = '';
+        document.getElementById('selectedFilesText').textContent = '';
+        document.getElementById('selectedFiles').classList.remove('visible');
+      } catch {
+        status.textContent = 'Upload failed. Is the backend running?';
+        status.className = 'status error';
+      }
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Upload`;
+    }
+
+    async function clearKB() {
+      await fetch('/clear', { method: 'POST' });
+      updateKB({ papers: [], total_chunks: 0 });
+      document.getElementById('uploadStatus').textContent = 'Knowledge base cleared.';
+    }
+
+    function fillQuestion(el) {
+      document.getElementById('chatInput').value = el.textContent;
+      document.getElementById('chatInput').focus();
+    }
+
+    function addMessage(role, content) {
+      const welcome = document.getElementById('welcome');
+      if (welcome) welcome.remove();
+
+      const container = document.getElementById('messages');
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
+
+      if (role === 'assistant') {
+        row.innerHTML = `<div class="avatar ai">AI</div><div class="bubble ${role}">${esc(content)}</div>`;
+      } else {
+        row.innerHTML = `<div class="bubble ${role}">${esc(content)}</div><div class="avatar user-av">You</div>`;
+      }
+
+      container.appendChild(row);
+      container.scrollTop = container.scrollHeight;
+      return row;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const q = input.value.trim();
+      if (!q || thinking) return;
+
+      addMessage('user', q);
+      input.value = '';
+      input.style.height = 'auto';
+      thinking = true;
+      document.getElementById('sendBtn').disabled = true;
+
+      const thinkingEl = addMessage('assistant', '');
+      const bubble = thinkingEl.querySelector('.bubble');
+      bubble.innerHTML = '<span class="dot-loader thinking"><span>.</span><span>.</span><span>.</span></span>';
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q }),
+        });
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let finalData = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          for (const line of chunk.split('\n')) {
+            if (line.startsWith('data: ')) {
+              try {
+                const parsed = JSON.parse(line.slice(6));
+                if (parsed.step) {
+                  bubble.innerHTML = '<span class="dot-loader thinking"><span>.</span><span>.</span><span>.</span></span> ' + esc(parsed.step);
+                } else if (!parsed.ping) {
+                  finalData = parsed;
+                }
+              } catch(e) {}
+            }
+          }
+        }
+
+        if (finalData && finalData.answer) {
+          const sources = finalData.sources?.length ? '\n\nSources: ' + finalData.sources.join(', ') : '';
+          bubble.textContent = finalData.answer + sources;
+        } else {
+          bubble.textContent = 'No response received from the model.';
+        }
+      } catch (err) {
+        console.error('Chat fetch error:', err);
+        bubble.textContent = 'Error connecting to backend. Make sure the server is running.';
+      }
+
+      thinking = false;
+      document.getElementById('sendBtn').disabled = false;
+      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>
